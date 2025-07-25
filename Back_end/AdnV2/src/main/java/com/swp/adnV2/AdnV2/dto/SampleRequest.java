@@ -13,9 +13,20 @@ public class SampleRequest {
 
     private LocalDate collectedDate;
     private LocalDate receivedDate;
+    private Long participantId;
 
     @Size(max = 20, message = "Status cannot exceed 20 characters")
     private String status;
+
+
+    public Long getParticipantId() {
+        return participantId;
+    }
+
+    public void setParticipantId(Long participantId) {
+        this.participantId = participantId;
+    }
+
     public SampleRequest() {
     }
 

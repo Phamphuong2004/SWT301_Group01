@@ -28,10 +28,6 @@ public class Participant {
     @Column(name = "email", columnDefinition = "NVARCHAR(100)")
     private String email;
 
-    @ManyToOne
-    @JoinColumn(name = "appointment_id")
-    private Appointment appointment;
-
     // Default constructor
     public Participant() {
     }
@@ -50,14 +46,6 @@ public class Participant {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public Appointment getAppointment() {
-        return appointment;
-    }
-
-    public void setAppointment(Appointment appointment) {
-        this.appointment = appointment;
     }
 
     // Getters and setters

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 public class AppointmentRequest {
     @NotBlank(message = "Full name is required")
@@ -32,6 +33,9 @@ public class AppointmentRequest {
     @NotBlank(message = "Service type is required")
     private String serviceType; // Huyết thông, ADN pháp lý,...
 
+    @NotBlank(message = "Test category is required")
+    private String testCategory; // loại xét nghiệm
+
     @NotNull(message = "Appointment date is required")
     @Future(message = "Appointment date must be in the future")
     private LocalDateTime appointmentDate;
@@ -40,7 +44,36 @@ public class AppointmentRequest {
     private String fingerprintFile; // đường dẫn đến file vân tay
     private String district; // quận huyện
     private String province;
-    private String testCategory; // loại xét nghiệm
+
+    private String collectionLocation;
+
+    private String kitComponentName;
+    private List<String> sampleTypes;
+
+
+    public String getCollectionLocation() {
+        return collectionLocation;
+    }
+
+    public void setCollectionLocation(String collectionLocation) {
+        this.collectionLocation = collectionLocation;
+    }
+
+    public String getKitComponentName() {
+        return kitComponentName;
+    }
+
+    public void setKitComponentName(String kitComponentName) {
+        this.kitComponentName = kitComponentName;
+    }
+
+    public List<String> getSampleTypes() {
+        return sampleTypes;
+    }
+
+    public void setSampleTypes(List<String> sampleTypes) {
+        this.sampleTypes = sampleTypes;
+    }
 
     public String getFullName() {
         return fullName;
@@ -144,5 +177,27 @@ public class AppointmentRequest {
 
     public void setAppointmentDate(LocalDateTime appointmentDate) {
         this.appointmentDate = appointmentDate;
+    }
+
+    @Override
+    public String toString() {
+        return "AppointmentRequest{" +
+                "fullName='" + fullName + '\'' +
+                ", dob=" + dob +
+                ", phone='" + phone + '\'' +
+                ", email='" + email + '\'' +
+                ", gender='" + gender + '\'' +
+                ", testPurpose='" + testPurpose + '\'' +
+                ", serviceType='" + serviceType + '\'' +
+                ", testCategory='" + testCategory + '\'' +
+                ", appointmentDate=" + appointmentDate +
+                ", collectionTime=" + collectionTime +
+                ", fingerprintFile='" + fingerprintFile + '\'' +
+                ", district='" + district + '\'' +
+                ", province='" + province + '\'' +
+                ", collectionLocation='" + collectionLocation + '\'' +
+                ", kitComponentName='" + kitComponentName + '\'' +
+                ", sampleTypes=" + sampleTypes +
+                '}';
     }
 }

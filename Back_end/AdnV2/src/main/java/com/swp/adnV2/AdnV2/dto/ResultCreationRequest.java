@@ -1,17 +1,27 @@
 package com.swp.adnV2.AdnV2.dto;
 
-import com.swp.adnV2.AdnV2.entity.Sample;
-import com.swp.adnV2.AdnV2.entity.Users;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class ResultCreationRequest {
     private LocalDate resultDate;
     private String resultData;
     private String interpretation;
     private String status = "Pending";
-    private Sample sample;
-    private Users users;
+    private List<Long> sampleId;
+    private String username;
+    private Long appointmentId;
+    private String resultFile;
+
+    public String getResultFile() {
+        return resultFile;
+    }
+
+    public void setResultFile(String resultFile) {
+        this.resultFile = resultFile;
+    }
 
     public LocalDate getResultDate() {
         return resultDate;
@@ -45,19 +55,27 @@ public class ResultCreationRequest {
         this.status = status;
     }
 
-    public Sample getSample() {
-        return sample;
+    public List<Long> getSampleId() {
+        return sampleId;
     }
 
-    public void setSample(Sample sample) {
-        this.sample = sample;
+    public void setSampleId(List<Long> sampleId) {
+        this.sampleId = sampleId;
     }
 
-    public Users getUsers() {
-        return users;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUsers(Users users) {
-        this.users = users;
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Long getAppointmentId() {
+        return appointmentId;
+    }
+
+    public void setAppointmentId(Long appointmentId) {
+        this.appointmentId = appointmentId;
     }
 }
