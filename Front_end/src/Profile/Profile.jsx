@@ -94,26 +94,35 @@ export default function Profile() {
         avatar,
       } = form;
 
-      const updateData = {
-        email,
-        phone,
-        full_name,
-        address,
-        date_of_birth,
-        gender,
-        avatar,
-      };
-
       const url = `/api/user/profile/update?username=${encodeURIComponent(
         userLocal.username
       )}`;
 
-      const response = await axios.post(url, updateData, {
-        headers: { Authorization: `Bearer ${userLocal.token}` },
+      // Luôn gửi form-data
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("phoneNumber", phone);
+      formData.append("fullName", full_name);
+      formData.append("address", address);
+      formData.append("dateOfBirth", date_of_birth);
+      formData.append("gender", gender);
+      // Chỉ append avatar nếu là base64 string
+      if (avatar && avatar.startsWith("data:image")) {
+        formData.append("avatar", avatar);
+      } else {
+        formData.append("avatar", "");
+      }
+      console.log("Avatar gửi lên:", avatar);
+
+      const response = await axios.post(url, formData, {
+        headers: {
+          Authorization: `Bearer ${userLocal.token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       if (response.data) {
-        const updatedUser = { ...user, ...updateData };
+        const updatedUser = { ...user, ...form };
         setUser(updatedUser);
         setForm(updatedUser);
 
@@ -227,53 +236,19 @@ export default function Profile() {
         </select>
         <label className="profile-form-label">Avatar</label>
         {isEditing && (
-          <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
-            <label>
-              <input
-                type="radio"
-                name="avatarOption"
-                value="url"
-                checked={avatarOption === "url"}
-                onChange={() => setAvatarOption("url")}
-                disabled={!isEditing}
-              />
-              Dán link ảnh
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="avatarOption"
-                value="file"
-                checked={avatarOption === "file"}
-                onChange={() => setAvatarOption("file")}
-                disabled={!isEditing}
-              />
-              Chọn từ thiết bị
-            </label>
-          </div>
-        )}
-        {(!isEditing || avatarOption === "url") && (
-          <input
-            className="profile-form-input"
-            name="avatar"
-            value={form.avatar || ""}
-            onChange={handleChange}
-            disabled={!isEditing}
-            placeholder="Dán link ảnh"
-            style={{ marginBottom: 8 }}
-          />
-        )}
-        {isEditing && avatarOption === "file" && (
           <input
             type="file"
             accept="image/*"
             className="profile-form-input"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
+            style={{ marginBottom: 8 }}
+            onChange={async (e) => {
+              const file = e.target.files[0];
+              if (file) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                  setForm({ ...form, avatar: reader.result });
+                  // Chỉ lưu base64 string vào form.avatar
+                  setForm((prev) => ({ ...prev, avatar: reader.result }));
+                  console.log("Avatar base64:", reader.result);
                 };
                 reader.readAsDataURL(file);
               }

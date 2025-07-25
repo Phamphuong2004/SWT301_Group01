@@ -56,6 +56,7 @@ public class SecurityConfig {
 
                         // API dành cho Guest - không cần xác thực
                         .requestMatchers("/api/view-appointment-guest").permitAll()
+                        .requestMatchers("/api/guest/get/**").permitAll()
 
                         // API dành cho Customer - yêu cầu role CUSTOMER
                         .requestMatchers("/api/create-appointment").hasAnyRole("CUSTOMER", "STAFF", "MANAGER")
@@ -71,8 +72,23 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("MANAGER")
 
                         // API dành cho người dùng đã xác thực (đã đăng nhập)
-                        .requestMatchers("/api/user/profile/update").authenticated()
-                        .requestMatchers("/api/user/reset-password").authenticated()
+                        .requestMatchers("/api/user/profile/update").permitAll()
+                        .requestMatchers("/api/user/reset-password").permitAll()
+
+                        .requestMatchers("/api/service-test-purpose/**").permitAll()
+                        .requestMatchers("/api/kit/get/**").permitAll()
+                        .requestMatchers("/api/test-category/by-service/**").permitAll()
+                        .requestMatchers("/api/sample-types/get-by-component-name/**").permitAll()
+
+
+                        // ... các permitAll khác ...
+                        .requestMatchers("/api/payments/create").permitAll() // Guest được phép tạo payment
+                        .requestMatchers("/api/payments/{paymentId}").permitAll() // (Tùy chọn, nếu muốn guest xem payment vừa tạo)
+                        // Các API còn lại chỉ cho user đã đăng nhập
+                        .requestMatchers("/api/payments/**").permitAll()
+
+                        .requestMatchers("/api/sample-types/**").permitAll()
+                        .requestMatchers("/api/results/appointment/**").permitAll()
 
                         // Mặc định, mọi request khác đều yêu cầu xác thực
                         .anyRequest().authenticated()

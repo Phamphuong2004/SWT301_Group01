@@ -41,10 +41,17 @@ public class FeedbackService {
             }
 
             // Kiểm tra quyền sở hữu feedback (nếu cần)
-            if (!feedback.getUser().getUsername().equals(username)) {
+//            if (!feedback.getUser().getUsername().equals(username)) {
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                        .body("You don't have permission to update this feedback");
+//            }
+            String role = currentUser.getRole();
+            if ("CUSTOMER".equalsIgnoreCase(role) && !feedback.getUser().getUsername().equals(username)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("You don't have permission to update this feedback");
             }
+
+            //staff và manager có thể cập nhật tất cả feedback
 
             // Cập nhật thông tin feedback
             feedback.setContent(feedbackRequest.getContent());
@@ -115,6 +122,7 @@ public class FeedbackService {
 
     public FeedbackResponse convertToDto(Feedback feedback) {
         FeedbackResponse feedbackResponse = new FeedbackResponse();
+        feedbackResponse.setFeedbackId(feedback.getFeedbackId());
         feedbackResponse.setFullName(feedback.getUser().getFullName());
         feedbackResponse.setContent(feedback.getContent());
         feedbackResponse.setRating(feedback.getRating());

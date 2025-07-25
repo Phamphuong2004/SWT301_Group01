@@ -10,10 +10,23 @@ export default function UpdateRoleForm() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const validate = () => {
+    if (!username || username.trim() === "") {
+      setError("Tên đăng nhập không được để trống.");
+      return false;
+    }
+    if (!newRole || !["manager", "staff", "customer"].includes(newRole)) {
+      setError("Role không hợp lệ.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess("");
     setError("");
+    if (!validate()) return;
     try {
       await updateRole({ username, newRole });
       setSuccess("Cập nhật role thành công!");
@@ -55,6 +68,7 @@ export default function UpdateRoleForm() {
                 onChange={(e) => setNewRole(e.target.value)}
                 required
               >
+                <option value="/">Chọn vai trò</option>
                 <option value="manager">manager</option>
                 <option value="staff">staff</option>
                 <option value="customer">customer</option>

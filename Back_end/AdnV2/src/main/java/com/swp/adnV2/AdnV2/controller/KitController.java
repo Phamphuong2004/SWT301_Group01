@@ -14,7 +14,7 @@ public class KitController {
     private KitService kitService;
 
     @GetMapping("/get/{serviceId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER','MANAGER', 'STAFF')")
+//    @PreAuthorize("hasAnyRole('CUSTOMER','MANAGER', 'STAFF')")
     public ResponseEntity<?> getKitByServiceId(@PathVariable("serviceId") Long serviceId) {
         return kitService.getKitByServiceId(serviceId);
     }
@@ -26,22 +26,18 @@ public class KitController {
         return kitService.createKitByServiceId(serviceId, kitComponentRequest);
     }
 
-    @PutMapping("/update/appointment-kit/{serviceId}/{kitComponentId}")
+    @PutMapping("/update/{kitComponentId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'STAFF')")
     public ResponseEntity<?> updateKit(
-            @PathVariable("serviceId") Long serviceId,
             @PathVariable("kitComponentId") Long kitComponentId,
             @RequestBody(required = false) KitComponentRequest kitComponentRequest) {
 
-        return kitService.updateKitComponent(serviceId, kitComponentId, kitComponentRequest);
+        return kitService.updateKitComponent(kitComponentId, kitComponentRequest);
     }
 
-    @DeleteMapping("/delete/{serviceId}/{kitComponentId}")
+    @DeleteMapping("delete/{kitComponentId}")
     @PreAuthorize("hasAnyRole('MANAGER', 'STAFF')")
-    public ResponseEntity<?> deleteKit(
-            @PathVariable("serviceId") Long serviceId,
-            @PathVariable("kitComponentId") Long kitComponentId) {
-
-        return kitService.deleteKitComponent(serviceId, kitComponentId);
+    public ResponseEntity<?> deleteKit(@PathVariable("kitComponentId") Long kitComponentId) {
+        return kitService.deleteKitComponent(kitComponentId);
     }
 }

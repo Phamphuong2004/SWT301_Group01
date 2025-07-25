@@ -3,7 +3,6 @@ package com.swp.adnV2.AdnV2.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 public class AppointmentResponse {
@@ -18,6 +17,7 @@ public class AppointmentResponse {
     private String serviceType;
     private LocalDateTime appointmentDate;
     private LocalDateTime collectionSampleTime;
+    private String collectionLocation;
     private String fingerprintFile;
     private String district;
     private String province;
@@ -25,17 +25,70 @@ public class AppointmentResponse {
     private String resultFile;
     private Long userId;
     private String kitComponentName;
-    private List<String> samples;
+    private List<String> sampleTypes;
+    private String paymentStatus;
 //    private Long userId;
 //    private String username;  // Optional: include if you want to show which user the appointment belongs to
 
+    public static class SampleInfo {
+        private Long sampleId;
+        private String sampleType;
+        private String participantFullName;
+        // ... các trường khác nếu cần
 
-    public List<String> getSamples() {
+        // getter, setter
+        public Long getSampleId() {
+            return sampleId;
+        }
+        public void setSampleId(Long sampleId) {
+            this.sampleId = sampleId;
+        }
+        public String getSampleType() {
+            return sampleType;
+        }
+        public void setSampleType(String sampleType) {
+            this.sampleType = sampleType;
+        }
+        public String getParticipantFullName() {
+            return participantFullName;
+        }
+        public void setParticipantFullName(String participantFullName) {
+            this.participantFullName = participantFullName;
+        }
+    }
+
+    private List<SampleInfo> samples;
+
+    public List<SampleInfo> getSamples() {
         return samples;
     }
 
-    public void setSamples(List<String> samples) {
+    public void setSamples(List<SampleInfo> samples) {
         this.samples = samples;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getCollectionLocation() {
+        return collectionLocation;
+    }
+
+    public void setCollectionLocation(String collectionLocation) {
+        this.collectionLocation = collectionLocation;
+    }
+
+    public List<String> getSampleTypes() {
+        return sampleTypes;
+    }
+
+    public void setSampleTypes(List<String> sampleTypes) {
+        this.sampleTypes = sampleTypes;
     }
 
     public String getKitComponentName() {

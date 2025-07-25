@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "Appointment")
@@ -49,8 +49,8 @@ public class Appointment {
     @Column(name = "collection_sample_time")
     private LocalDateTime collectionSampleTime;
 
-    @Column(name = "status", columnDefinition = "NVARCHAR(20) DEFAULT 'Pending'")
-    private String status = "Pending";
+    @Column(name = "status", columnDefinition = "NVARCHAR(20) DEFAULT 'PENDING'")
+    private String status = "PENDING";
 
     @Column(name = "note", columnDefinition = "NVARCHAR(MAX)")
     private String note;
@@ -67,21 +67,83 @@ public class Appointment {
     @Column(name = "fingerprint_file", columnDefinition = "NVARCHAR(255)")
     private String fingerprintFile;
 
-    @Column(name = "result_file", columnDefinition = "NVARCHAR(255)")
-    private String resultFile;
-
     @Column(name = "district", columnDefinition = "NVARCHAR(100)")
     private String district;
 
     @Column(name = "province", columnDefinition = "NVARCHAR(100)")
     private String province;
 
+    @Column(name = "collection_location", columnDefinition = "NVARCHAR(50)")
+    private String collectionLocation;
+
     @ManyToOne
     @JoinColumn(name = "service_id")
     private Services service;
 
+    @OneToMany(mappedBy = "appointment")
+    private List<CollectedSample> collectedSamples;
+
+    @ManyToOne
+    @JoinColumn(name = "kit_component_id")
+    private KitComponent kitComponent;
+
+    @ManyToOne
+    @JoinColumn(name = "guest_id", nullable = true)
+    private Guest guest;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+    public String getCollectionLocation() {
+        return collectionLocation;
+    }
+
+    public void setCollectionLocation(String collectionLocation) {
+        this.collectionLocation = collectionLocation;
+    }
+
     // Default constructor
     public Appointment() {}
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public List<CollectedSample> getCollectedSamples() {
+        return collectedSamples;
+    }
+
+    public void setCollectedSamples(List<CollectedSample> collectedSamples) {
+        this.collectedSamples = collectedSamples;
+    }
+
+    public KitComponent getKitComponent() {
+        return kitComponent;
+    }
+
+    public void setKitComponent(KitComponent kitComponent) {
+        this.kitComponent = kitComponent;
+    }
+
+    public Guest getGuest() {
+        return guest;
+    }
+
+    public void setGuest(Guest guest) {
+        this.guest = guest;
+    }
+
+    public List<CollectedSample> getSamples() {
+        return collectedSamples;
+    }
+
+    public void setSamples(List<CollectedSample> collectedSamples) {
+        this.collectedSamples = collectedSamples;
+    }
 
     public Services getService() {
         return service;
@@ -233,14 +295,6 @@ public class Appointment {
 
     public void setUsers(Users users) {
         this.users = users;
-    }
-
-    public String getResultFile() {
-        return resultFile;
-    }
-
-    public void setResultFile(String resultFile) {
-        this.resultFile = resultFile;
     }
 
 }

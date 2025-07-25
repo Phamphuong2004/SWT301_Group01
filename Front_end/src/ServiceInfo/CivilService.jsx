@@ -2,35 +2,53 @@ import React, { useState } from "react";
 import "./CivilService.css";
 import ServiceCard from "./ServiceCard";
 import { useNavigate } from "react-router-dom";
-import { administrativeServices } from "./servicesData";
+import { allServices } from "./servicesData";
+
+// Hàm phân loại dịch vụ theo loại dân sự/hành chính/cả hai
+function getCivilServices(services) {
+  // Các id hoặc thuộc tính xác định dịch vụ dân sự (ví dụ: category: "civil")
+  // Giả sử mỗi service có trường 'category' hoặc 'type'
+  // Nếu chưa có, bạn nên bổ sung trong servicesData.js
+  return services.filter(
+    (s) =>
+      s.category === "Dân sự" ||
+      s.type === "civil" ||
+      (Array.isArray(s.category) && s.category.includes("Dân sự")) ||
+      (Array.isArray(s.type) && s.type.includes("civil")) ||
+      s.category === "Cả hai" ||
+      s.type === "both"
+  );
+}
 
 // Simple Registration Form Component
-const RegisterForm = ({ onClose }) => {
+const RegisterForm = ({ onClose, services }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    service: ''
+    name: "",
+    email: "",
+    phone: "",
+    service: "",
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission here
-    console.log('Form submitted:', formData);
+    console.log("Form submitted:", formData);
     onClose();
   };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   return (
     <div className="register-form-overlay">
       <div className="register-form-container">
-        <button className="close-button" onClick={onClose}>×</button>
+        <button className="close-button" onClick={onClose}>
+          ×
+        </button>
         <h2>Đăng ký tư vấn</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -76,13 +94,16 @@ const RegisterForm = ({ onClose }) => {
               required
             >
               <option value="">Chọn dịch vụ</option>
-              <option value="xac-minh">Xác minh quan hệ huyết thống</option>
-              <option value="tranh-chap">Giải quyết tranh chấp tài sản</option>
-              <option value="thua-ke">Thừa kế</option>
-              <option value="hop-dong">Hợp đồng dân sự</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
             </select>
           </div>
-          <button type="submit" className="submit-button">Gửi yêu cầu</button>
+          <button type="submit" className="submit-button">
+            Gửi yêu cầu
+          </button>
         </form>
       </div>
     </div>
@@ -91,60 +112,34 @@ const RegisterForm = ({ onClose }) => {
 
 export default function CivilService() {
   const navigate = useNavigate();
-  const services = [
-    {
-      id: "family-relationship",
-      title: "Xác minh quan hệ huyết thống",
-      description: "Giám định ADN để xác định mối quan hệ huyết thống giữa các thành viên trong gia đình.",
-      icon: "🧬",
-      features: ["Xét nghiệm ADN chính xác", "Kết quả nhanh chóng", "Bảo mật thông tin"],
-      type: "administrative"
-    },
-    {
-      id: "property-dispute",
-      title: "Giải quyết tranh chấp tài sản",
-      description: "Tư vấn và hỗ trợ giải quyết các vấn đề liên quan đến tài sản, quyền sở hữu và phân chia tài sản.",
-      icon: "🏠",
-      features: ["Tư vấn pháp lý", "Hòa giải tranh chấp", "Đại diện pháp lý"],
-      type: "civil"
-    },
-    {
-      id: "inheritance",
-      title: "Thừa kế",
-      description: "Tư vấn về quyền thừa kế, di chúc và các vấn đề pháp lý liên quan đến tài sản thừa kế.",
-      icon: "📜",
-      features: ["Soạn thảo di chúc", "Giải quyết tranh chấp", "Tư vấn thừa kế"],
-      type: "civil"
-    },
-    {
-      id: "civil-contract",
-      title: "Hợp đồng dân sự",
-      description: "Soạn thảo và tư vấn về các loại hợp đồng dân sự, đảm bảo tính pháp lý và quyền lợi của các bên.",
-      icon: "📝",
-      features: ["Soạn thảo hợp đồng", "Rà soát pháp lý", "Tư vấn điều khoản"],
-      type: "civil"
-    }
-  ];
+  // Lọc chỉ các dịch vụ dân sự hoặc cả hai
+  const services = getCivilServices(allServices);
 
   const testimonials = [
     {
+      id: "testimonial-1",
       name: "Nguyễn Văn A",
       role: "Khách hàng",
-      content: "Dịch vụ tư vấn rất chuyên nghiệp, đội ngũ luật sư nhiệt tình và am hiểu. Tôi rất hài lòng với kết quả đạt được.",
-      avatar: "👨‍💼"
+      content:
+        "Dịch vụ tư vấn rất chuyên nghiệp, đội ngũ luật sư nhiệt tình và am hiểu. Tôi rất hài lòng với kết quả đạt được.",
+      avatar: "👨‍💼",
     },
     {
+      id: "testimonial-2",
       name: "Trần Thị B",
       role: "Khách hàng",
-      content: "Quá trình xử lý vấn đề thừa kế của tôi được giải quyết nhanh chóng và hiệu quả. Cảm ơn đội ngũ tư vấn viên.",
-      avatar: "👩‍💼"
+      content:
+        "Quá trình xử lý vấn đề thừa kế của tôi được giải quyết nhanh chóng và hiệu quả. Cảm ơn đội ngũ tư vấn viên.",
+      avatar: "👩‍💼",
     },
     {
+      id: "testimonial-3",
       name: "Lê Văn C",
       role: "Khách hàng",
-      content: "Dịch vụ xác minh quan hệ huyết thống rất chính xác và bảo mật. Tôi hoàn toàn tin tưởng vào kết quả.",
-      avatar: "👨‍💼"
-    }
+      content:
+        "Dịch vụ xác minh quan hệ huyết thống rất chính xác và bảo mật. Tôi hoàn toàn tin tưởng vào kết quả.",
+      avatar: "👨‍💼",
+    },
   ];
 
   const [showForm, setShowForm] = useState(false);
@@ -152,13 +147,9 @@ export default function CivilService() {
   const handleCloseForm = () => setShowForm(false);
 
   const handleServiceClick = (serviceId) => {
-    const service = services.find(s => s.id === serviceId);
+    const service = services.find((s) => s.id === serviceId);
     if (service) {
-      if (service.type === "administrative") {
-        navigate(`/service/${serviceId}`);
-      } else {
-        navigate(`/civil-service/${serviceId}`);
-      }
+      navigate(`/service/${serviceId}`);
     }
   };
 
@@ -169,7 +160,9 @@ export default function CivilService() {
         <div className="hero-content">
           <h1>Dịch vụ Tư vấn Dân sự Chuyên nghiệp</h1>
           <p>Giải pháp pháp lý toàn diện cho mọi vấn đề dân sự của bạn</p>
-          <button className="cta-button">Tư vấn miễn phí</button>
+          <button className="cta-button" onClick={handleOpenForm}>
+            Tư vấn miễn phí
+          </button>
         </div>
       </div>
 
@@ -178,8 +171,9 @@ export default function CivilService() {
         <div className="service-header">
           <h2>Dịch vụ Dân sự</h2>
           <p className="service-intro">
-            Chúng tôi cung cấp các dịch vụ tư vấn và hỗ trợ pháp lý chuyên nghiệp trong lĩnh vực dân sự,
-            giúp khách hàng giải quyết các vấn đề pháp lý một cách hiệu quả và đúng pháp luật.
+            Chúng tôi cung cấp các dịch vụ tư vấn và hỗ trợ pháp lý chuyên
+            nghiệp trong lĩnh vực dân sự, giúp khách hàng giải quyết các vấn đề
+            pháp lý một cách hiệu quả và đúng pháp luật.
           </p>
         </div>
 
@@ -187,7 +181,7 @@ export default function CivilService() {
         <div className="services-grid">
           {services.map((service, index) => (
             <ServiceCard
-              key={index}
+              key={service.id || index}
               service={service}
               onDetail={() => handleServiceClick(service.id)}
               onMore={() => handleServiceClick(service.id)}
@@ -222,7 +216,7 @@ export default function CivilService() {
           <h2>Khách hàng nói gì về chúng tôi?</h2>
           <div className="testimonials-grid">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="testimonial-card">
+              <div key={testimonial.id || index} className="testimonial-card">
                 <div className="testimonial-avatar">{testimonial.avatar}</div>
                 <p className="testimonial-content">{testimonial.content}</p>
                 <div className="testimonial-author">
@@ -238,7 +232,8 @@ export default function CivilService() {
         <div className="contact-section">
           <h2>Liên hệ tư vấn</h2>
           <p>
-            Để được tư vấn chi tiết về các dịch vụ dân sự, vui lòng liên hệ với chúng tôi qua:
+            Để được tư vấn chi tiết về các dịch vụ dân sự, vui lòng liên hệ với
+            chúng tôi qua:
           </p>
           <div className="contact-info">
             <div className="contact-item">
@@ -266,7 +261,9 @@ export default function CivilService() {
         </div>
       </div>
 
-      {showForm && <RegisterForm onClose={handleCloseForm} />}
+      {showForm && (
+        <RegisterForm onClose={handleCloseForm} services={services} />
+      )}
     </div>
   );
 }

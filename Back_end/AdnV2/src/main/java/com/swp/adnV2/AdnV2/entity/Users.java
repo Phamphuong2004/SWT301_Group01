@@ -15,7 +15,7 @@ public class Users {
     @Column(name = "username", length = 50, nullable = false, unique = true)
     private String username;
 
-    @Column(name = "password", length = 255, nullable = false)
+    @Column(name = "password", length = 255, nullable = true)
     private String password;
 
     @Column(name = "email", length = 100, nullable = false, unique = true)
@@ -39,26 +39,13 @@ public class Users {
     @Column(name = "role", length = 20, nullable = false)
     private String role;
 
-    @Column(name = "avatar")
+    @Lob
     private String avatar;
 
     // Default constructor
     public Users() {}
 
-    // Parameterized constructor
-    public Users(String username, String password, String email, String phone, String fullName,
-                 String address, LocalDate dateOfBirth, String gender, String role, String avatar) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.phone = phone;
-        this.fullName = fullName;
-        this.address = address;
-        this.dateOfBirth = dateOfBirth;
-        this.gender = gender;
-        this.role = role;
-        this.avatar = avatar;
-    }
+
 
     // Getters and Setters
     public Long getUserId() {
@@ -141,11 +128,10 @@ public class Users {
         this.role = role;
     }
 
-    public String getAvatar() {
-        return avatar;
-    }
-
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+    public String getAvatar() {
+        return avatar;
     }
 }

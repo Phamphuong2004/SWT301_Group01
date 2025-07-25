@@ -3,6 +3,7 @@ package com.swp.adnV2.AdnV2.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "Result")
@@ -24,13 +25,20 @@ public class Result {
     @Column(name = "status", columnDefinition = "NVARCHAR(20) DEFAULT 'Pending'")
     private String status = "Pending";
 
-    @ManyToOne
+    @Column(name = "result_file", columnDefinition = "NVARCHAR(255)")
+    private String resultFile;
+
+    @OneToMany
     @JoinColumn(name = "sample_id")
-    private Sample sample;
+    private List<CollectedSample> collectedSample;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private Users users;
+
+    @OneToOne
+    @JoinColumn(name = "appointment_id", unique = true)
+    private Appointment appointment;
 
     // Default constructor
     public Result() {
@@ -69,12 +77,12 @@ public class Result {
         this.interpretation = interpretation;
     }
 
-    public Sample getSample() {
-        return sample;
+    public List<CollectedSample> getCollectedSample() {
+        return collectedSample;
     }
 
-    public void setSample(Sample sample) {
-        this.sample = sample;
+    public void setCollectedSample(List<CollectedSample> collectedSample) {
+        this.collectedSample = collectedSample;
     }
 
     public Users getUser() {
@@ -93,6 +101,29 @@ public class Result {
         this.status = status;
     }
 
+    public String getResultFile() {
+        return resultFile;
+    }
+    public void setResultFile(String resultFile) {
+        this.resultFile = resultFile;
+    }
+
+    public Appointment getAppointment() {
+        return appointment;
+    }
+
+    public void setAppointment(Appointment appointment) {
+        this.appointment = appointment;
+    }
+
+    public Users getUsers() {
+        return users;
+    }
+
+    public void setUsers(Users users) {
+        this.users = users;
+    }
+
     @Override
     public String toString() {
         return "Result{" +
@@ -100,9 +131,11 @@ public class Result {
                 ", resultDate=" + resultDate +
                 ", resultData='" + resultData + '\'' +
                 ", interpretation='" + interpretation + '\'' +
-                ", sample=" + sample +
+                ", sample=" + collectedSample +
                 ", user=" + users +
                 ", status='" + status + '\'' +
+                ", appointment=" + appointment +
+                ", resultFile='" + resultFile + '\'' +
                 '}';
     }
 }

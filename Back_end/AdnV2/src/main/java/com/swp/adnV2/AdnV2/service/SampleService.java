@@ -1,5 +1,6 @@
 package com.swp.adnV2.AdnV2.service;
 
+import com.swp.adnV2.AdnV2.dto.ParticipantResponse;
 import com.swp.adnV2.AdnV2.dto.SampleRequest;
 import com.swp.adnV2.AdnV2.dto.SampleResponse;
 import com.swp.adnV2.AdnV2.entity.*;
@@ -11,7 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class SampleService {
@@ -30,6 +34,55 @@ public class SampleService {
     @Autowired
     private ParticipantRepsitory participantRepository;
 
+    @Autowired
+    private SampleTypeRepository sampleTypeRepository;
+
+    public ResponseEntity<?> createCollectedSample(Long appointmentId, SampleRequest sampleRequest, String username) {
+        Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+        if (!appointmentOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Appointment with ID " + appointmentId + " not found");
+        }
+        Appointment appointment = appointmentOpt.get();
+
+        KitComponent kitComponent = appointment.getKitComponent();
+        if (kitComponent == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Appointment does not have a selected kit component");
+        }
+
+        // Lấy SampleType từ DB
+        SampleType sampleType = null;
+        if (sampleRequest.getSampleType() != null && !sampleRequest.getSampleType().trim().isEmpty()) {
+            Optional<SampleType> optionalSampleType = sampleTypeRepository.findByName(sampleRequest.getSampleType());
+            if (optionalSampleType.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Sample type not found: " + sampleRequest.getSampleType());
+            }
+            sampleType = optionalSampleType.get();
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Sample type is required");
+        }
+
+        CollectedSample collectedSample = new CollectedSample();
+        collectedSample.setAppointment(appointment);
+        collectedSample.setSampleType(sampleType);
+        collectedSample.setCollectedDate(sampleRequest.getCollectedDate() != null ? sampleRequest.getCollectedDate() : LocalDate.now());
+        collectedSample.setReceivedDate(sampleRequest.getReceivedDate() != null ? sampleRequest.getReceivedDate() : LocalDate.now());
+        collectedSample.setStatus(sampleRequest.getStatus() != null ? sampleRequest.getStatus() : "Pending");
+        collectedSample.setKitComponent(kitComponent);
+        collectedSample.setUsers(userRepository.findByUsername(username));
+        if (sampleRequest.getParticipantId() != null) {
+            Participant participant = participantRepository.findById(sampleRequest.getParticipantId())
+                    .orElseThrow(() -> new RuntimeException("Participant not found"));
+            collectedSample.setParticipant(participant);
+        }
+        sampleRepository.save(collectedSample);
+        SampleResponse response = convertToSampleResponse(collectedSample);
+        return ResponseEntity.ok("Sample created successfully");
+    }
+
     public ResponseEntity<?> softDeleteSample(Long sampleId, String username) {
         try {
             // Kiểm tra thông tin người dùng
@@ -39,20 +92,20 @@ public class SampleService {
             }
 
             // Kiểm tra mẫu tồn tại
-            Optional<Sample> sampleOpt = sampleRepository.findById(sampleId);
+            Optional<CollectedSample> sampleOpt = sampleRepository.findById(sampleId);
             if (!sampleOpt.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Sample with ID " + sampleId + " not found");
             }
 
-            Sample sample = sampleOpt.get();
+            CollectedSample collectedSample = sampleOpt.get();
 
             // Đổi trạng thái thành "Deleted"
-            sample.setStatus("Deleted");
-            sample.setUsers(currentUser); // Lưu người thực hiện xóa
+            collectedSample.setStatus("Deleted");
+            collectedSample.setUsers(currentUser); // Lưu người thực hiện xóa
 
             // Lưu thông tin cập nhật
-            sampleRepository.save(sample);
+            sampleRepository.save(collectedSample);
 
             return ResponseEntity.ok("Sample with ID " + sampleId + " has been soft deleted");
         } catch (Exception e) {
@@ -71,14 +124,14 @@ public class SampleService {
             }
 
             // Kiểm tra mẫu tồn tại
-            Optional<Sample> sampleOpt = sampleRepository.findById(sampleId);
+            Optional<CollectedSample> sampleOpt = sampleRepository.findById(sampleId);
             if (!sampleOpt.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Sample with ID " + sampleId + " not found");
             }
 
-            Sample sample = sampleOpt.get();
-            sampleRepository.delete(sample);
+            CollectedSample collectedSample = sampleOpt.get();
+            sampleRepository.delete(collectedSample);
             return ResponseEntity.ok("Sample with ID " + sampleId + " has been deleted");
         } catch (Exception e) {
             System.err.println("Error deleting sample with ID " + sampleId + ": " + e.getMessage());
@@ -95,32 +148,43 @@ public class SampleService {
                 return ResponseEntity.badRequest().body("User not found");
             }
 
-            Optional<Sample> optionalSample = sampleRepository.findById(sampleId);
+            Optional<CollectedSample> optionalSample = sampleRepository.findById(sampleId);
             if (!optionalSample.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Sample with ID " + sampleId + " not found");
             }
-            Sample sample = optionalSample.get();
-            if(sampleRequest.getSampleType() != null && !sampleRequest.getSampleType().trim().isEmpty()) {
-                sample.setSampleType(sampleRequest.getSampleType());
+            CollectedSample collectedSample = optionalSample.get();
+            if (sampleRequest.getSampleType() != null && !sampleRequest.getSampleType().trim().isEmpty()) {
+                Optional<SampleType> optionalSampleType = sampleTypeRepository.findByName(sampleRequest.getSampleType());
+                if (optionalSampleType.isEmpty()) {
+                    return ResponseEntity.badRequest().body("Sample type not found: " + sampleRequest.getSampleType());
+                }
+                SampleType sampleType = optionalSampleType.get();
+                collectedSample.setSampleType(sampleType);
             }
 
             if(sampleRequest.getCollectedDate() != null){
-                sample.setCollectedDate(sampleRequest.getCollectedDate());
+                collectedSample.setCollectedDate(sampleRequest.getCollectedDate());
             }
 
             if(sampleRequest.getReceivedDate() != null) {
-                sample.setReceivedDate(sampleRequest.getReceivedDate());
+                collectedSample.setReceivedDate(sampleRequest.getReceivedDate());
             }
 
             if(sampleRequest.getStatus() != null && !sampleRequest.getStatus().trim().isEmpty()) {
-                sample.setStatus(sampleRequest.getStatus());
+                collectedSample.setStatus(sampleRequest.getStatus());
             }
 
-            sample.setUsers(currentUser);   //cap nhat nguoi sua doi
+            if (sampleRequest.getParticipantId() != null) {
+                Participant participant = participantRepository.findById(sampleRequest.getParticipantId())
+                        .orElseThrow(() -> new RuntimeException("Participant not found"));
+                collectedSample.setParticipant(participant);
+            }
 
-            Sample savedSample = sampleRepository.save(sample);
-            SampleResponse response = convertToSampleResponse(savedSample);
+            collectedSample.setUsers(currentUser);   //cap nhat nguoi sua doi
+
+            CollectedSample savedCollectedSample = sampleRepository.save(collectedSample);
+            SampleResponse response = convertToSampleResponse(savedCollectedSample);
             return ResponseEntity.ok("Updated sample successfully");
         } catch (Exception e) {
             System.err.println("Error updating sample with ID " + sampleId + ": " + e.getMessage());
@@ -140,17 +204,17 @@ public class SampleService {
                         .body("Appointment with ID " + appointmentId + " not found");
             }
 
-            //lấy danh sách mẫu theo appointmentId
-            List<Sample> samples = sampleRepository.findByAppointment_AppointmentId(appointmentId);
-            if (samples.isEmpty()) {
+            List<CollectedSample> collectedSamples = sampleRepository.findByAppointment_AppointmentId(appointmentId);
+            if (collectedSamples == null || collectedSamples.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("No samples found for appointment ID " + appointmentId);
+                        .body("No sample found for appointment ID " + appointmentId);
             }
-            List<SampleResponse> responseList = samples.stream()
-                    .map(this::convertToSampleResponse)
-                    .collect(java.util.stream.Collectors.toList());
 
-            return ResponseEntity.ok(responseList);
+            List<SampleResponse> responses = collectedSamples.stream()
+                    .map(sample -> convertToSampleResponse(sample))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(responses);
         } catch (Exception e) {
             System.err.println("Error getting samples for appointment ID " + appointmentId + ": " + e.getMessage());
             e.printStackTrace();
@@ -161,7 +225,7 @@ public class SampleService {
 
     public ResponseEntity<?> getSampleById(Long sampleId) {
         try{
-            Optional<Sample> sample = sampleRepository.findById(sampleId);
+            Optional<CollectedSample> sample = sampleRepository.findById(sampleId);
             if(!sample.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Sample with ID " + sampleId + " not found");
@@ -177,25 +241,32 @@ public class SampleService {
         }
     }
 
-    private SampleResponse convertToSampleResponse(Sample sample) {
+    private SampleResponse convertToSampleResponse(CollectedSample collectedSample) {
         SampleResponse response = new SampleResponse();
 
-        response.setSampleId(sample.getSampleId());
-        response.setSampleType(sample.getSampleType());
-        response.setCollectedDate(sample.getCollectedDate());
-        response.setReceivedDate(sample.getReceivedDate());
-        response.setStatus(sample.getStatus());
+        response.setSampleId(collectedSample.getSampleId());
+        response.setSampleType(
+                collectedSample.getSampleType() != null ? collectedSample.getSampleType().getName() : null
+        );
+        response.setCollectedDate(collectedSample.getCollectedDate());
+        response.setReceivedDate(collectedSample.getReceivedDate());
+        response.setStatus(collectedSample.getStatus());
 
-        if (sample.getUsers() != null) {
-            response.setUsername(sample.getUsers().getUsername());
+        if (collectedSample.getUsers() != null) {
+            response.setUsername(collectedSample.getUsers().getUsername());
         }
-        if (sample.getKitComponent() != null) {
-            response.setKitComponentName(sample.getKitComponent().getComponentName());
+        if (collectedSample.getKitComponent() != null) {
+            response.setKitComponentName(collectedSample.getKitComponent().getComponentName());
+        }
+
+        if (collectedSample.getParticipant() != null) {
+            response.setParticipantId(collectedSample.getParticipant().getParticipantId());
+            response.setParticipantFullName(collectedSample.getParticipant().getFullName());
         }
         return response;
     }
 
-    public ResponseEntity<?> createSampleByAppointmentId(Long appointmentId, SampleRequest request, String username) {
+    public ResponseEntity<?> updateSampleByAppointmentId(Long appointmentId, SampleRequest request, String username) {
         try{
             Users currentUser = userRepository.findByUsername(username);
             if(currentUser == null) {
@@ -208,75 +279,105 @@ public class SampleService {
                         .body("Appointment with ID " + appointmentId + " not found");
             }
 
-            Appointment appointment = appointmentOpt.get();
             // Kiểm tra yêu cầu tạo mẫu
             if (request.getSampleType() == null || request.getSampleType().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body("Sample type is required");
             }
 
-
-            Sample sample = new Sample();
-            sample.setSampleType(request.getSampleType());
-            if( request.getCollectedDate() != null) {
-                sample.setCollectedDate(request.getCollectedDate());
-            }else if (appointment.getCollectionSampleTime() != null) {
-                sample.setCollectedDate(appointment.getCollectionSampleTime().toLocalDate());
-            } else {
-                sample.setCollectedDate(LocalDate.now());
+            Optional<SampleType> optionalSampleType = sampleTypeRepository.findByName(request.getSampleType());
+            if (optionalSampleType.isEmpty()) {
+                return ResponseEntity.badRequest().body("Sample type not found: " + request.getSampleType());
             }
 
-            sample.setReceivedDate(request.getReceivedDate());
+            SampleType sampleType = optionalSampleType.get();
 
-            // Thiết lập trạng thái
-            if (request.getStatus() != null && !request.getStatus().isEmpty()) {
-                sample.setStatus(request.getStatus());
-            } else {
-                // Thêm trạng thái mặc định
-                sample.setStatus("Created");
-            }
-            sample.setUsers(currentUser);
-            sample.setAppointment(appointment);
-            KitComponent kitComponent = findKitComponentFromAppointment(appointment);
-            if (kitComponent != null) {
-                sample.setKitComponent(kitComponent);
-            } else {
-                return ResponseEntity.badRequest().body("No suitable KitComponent found for this appointment");
+            // 4. Lấy toàn bộ sample của appointment (nếu là 1-N)
+            List<CollectedSample> collectedSamples = sampleRepository.findByAppointment_AppointmentId(appointmentId);
+            if (collectedSamples == null || collectedSamples.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No sample found for appointment ID " + appointmentId);
             }
 
-            appointmentRepository.save(appointment);
+            // 5. Cập nhật toàn bộ sample (hoặc chọn sample phù hợp nếu muốn)
+            for (CollectedSample collectedSample : collectedSamples) {
+                // Update các trường nếu có
+                collectedSample.setSampleType(sampleType);
 
-            Sample savedSample = sampleRepository.save(sample);
-            return ResponseEntity.ok("Sample created successfully with ID: " + savedSample.getSampleId());
+                if (request.getCollectedDate() != null) {
+                    collectedSample.setCollectedDate(request.getCollectedDate());
+                }
+                if (request.getReceivedDate() != null) {
+                    collectedSample.setReceivedDate(request.getReceivedDate());
+                }
+                if (request.getStatus() != null && !request.getStatus().isEmpty()) {
+                    collectedSample.setStatus(request.getStatus());
+                }
+                collectedSample.setUsers(currentUser);
+
+                if (request.getParticipantId() != null) {
+                    Participant participant = participantRepository.findById(request.getParticipantId())
+                            .orElseThrow(() -> new RuntimeException("Participant not found"));
+                    collectedSample.setParticipant(participant);
+                }
+
+                sampleRepository.save(collectedSample); // Lưu từng sample
+            }
+            return ResponseEntity.ok("Sample updated successfully for appointment ID: " + appointmentId);
         } catch (Exception e){
-            // Ghi log lỗi
-            System.err.println("Error creating sample for appointment ID " + appointmentId + ": " + e.getMessage());
+            System.err.println("Error updating sample for appointment ID " + appointmentId + ": " + e.getMessage());
             e.printStackTrace();
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error creating sample: " + e.getMessage());
+                    .body("Error updating sample: " + e.getMessage());
         }
     }
 
-    private KitComponent findKitComponentFromAppointment(Appointment appointment) {
-        // Nếu appointment có liên kết với service, tìm kit component từ service
-        if (appointment.getService() != null) {
-            List<KitComponent> serviceKitComponents = kitComponentRepository.findByService_ServiceId(
-                    appointment.getService().getServiceId());
-
-            if (!serviceKitComponents.isEmpty()) {
-                return serviceKitComponents.get(0); // Lấy KitComponent đầu tiên
-            }
+    public ResponseEntity<?> getParticipantsByAppointmentId(Long appointmentId) {
+        List<CollectedSample> collectedSamples = sampleRepository.findByAppointment_AppointmentId(appointmentId);
+        if (collectedSamples == null || collectedSamples.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No sample found for appointment ID " + appointmentId);
         }
+        // Sử dụng Set để loại trùng participant nếu cần
+        Set<Participant> participants = collectedSamples.stream()
+                .map(CollectedSample::getParticipant)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
-        // Kiểm tra xem có KitComponent nào đã được dùng cho appointment này chưa
-        List<Sample> existingSamples = sampleRepository.findByAppointment_AppointmentId(appointment.getAppointmentId());
-        if (!existingSamples.isEmpty() && existingSamples.get(0).getKitComponent() != null) {
-            return existingSamples.get(0).getKitComponent();
-        }
+        // Nếu muốn trả về DTO (nên như vậy)
+        Set<ParticipantResponse> participantResponses = participants.stream().map(participant -> {
+            ParticipantResponse dto = new ParticipantResponse();
+            dto.setParticipantId(participant.getParticipantId());
+            dto.setFullName(participant.getFullName());
+            dto.setGender(participant.getGender());
+            dto.setDateOfBirth(participant.getDateOfBirth());
+            dto.setPhoneNumber(participant.getPhone());
+            dto.setEmail(participant.getEmail());
+            return dto;
+        }).collect(Collectors.toSet());
 
-        // Không tìm thấy KitComponent phù hợp
-        return null;
+        return ResponseEntity.ok(participantResponses);
     }
+
+//    private KitComponent findKitComponentFromAppointment(Appointment appointment) {
+//        // Nếu appointment có liên kết với service, tìm kit component từ service
+//        if (appointment.getService() != null) {
+//            List<KitComponent> serviceKitComponents = kitComponentRepository.findByService_ServiceId(
+//                    appointment.getService().getServiceId());
+//
+//            if (!serviceKitComponents.isEmpty()) {
+//                return serviceKitComponents.get(0); // Lấy KitComponent đầu tiên
+//            }
+//        }
+//
+//        // Kiểm tra xem có KitComponent nào đã được dùng cho appointment này chưa
+//        List<Sample> existingSamples = sampleRepository.findByAppointment_AppointmentId(appointment.getAppointmentId());
+//        if (!existingSamples.isEmpty() && existingSamples.get(0).getKitComponent() != null) {
+//            return existingSamples.get(0).getKitComponent();
+//        }
+//
+//        // Không tìm thấy KitComponent phù hợp
+//        return null;
+//    }
 
 
 }
